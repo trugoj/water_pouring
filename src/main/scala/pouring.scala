@@ -23,7 +23,7 @@ class Pouring(capacity: Vector[Int]) {
   case class Pour(from: Int, to: Int) extends Move {
     def change(state: State) =  {
       val amount = state(from) min (capacity(to) - state(to))
-      state updated (from, state(from) - amount) updated (to, state(to))
+      state updated (from, state(from) - amount) updated (to, state(to) + amount)
     }
   }
 
@@ -36,10 +36,10 @@ class Pouring(capacity: Vector[Int]) {
 
   // Paths
 
-  class Path(history: List[Move]) {
-    def endState: State = (history foldRight initialState) (_ change _)
+  class Path(history: List[Move], val endState: State) {
+    //def endState: State = (history foldRight initialState) (_ change _)
 
-    def extend(move: Move) = new Path(move :: history)
+    def extend(move: Move) = new Path(move :: history, move change endState)
 
     override def toString = (history.reverse mkString " ") + "-->" + endState
 
@@ -53,7 +53,7 @@ class Pouring(capacity: Vector[Int]) {
     */
   }
 
-  val initialPath = new Path(Nil)
+  val initialPath = new Path(Nil, initialState)
 
   def from(paths: Set[Path], explored: Set[State]): Stream[Set[Path]] =
     if (paths.isEmpty) Stream.empty
@@ -68,7 +68,7 @@ class Pouring(capacity: Vector[Int]) {
 
   val pathSets = from(Set(initialPath), Set(initialState))
 
-  def solution(target: Int): Stream[Path] =
+  def solutions(target: Int): Stream[Path] =
     for {
       pathSet <- pathSets
       path <- pathSet
